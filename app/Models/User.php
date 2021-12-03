@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -41,4 +42,19 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+    public function permission()
+    {
+        return $this->BelongsToMany(Permission::class,
+            'permission_id',
+            'id'
+        );
+    }
+
+    public function role()
+    {
+        return $this->belongsToMany('Spatie\Permission\Models\Roles',
+            'role_id',
+            'name',
+        );
+    }
 }

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
-class PostController extends Controller
+class PosteController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -74,7 +74,7 @@ class PostController extends Controller
     {
         $user = Auth::user();
         if (!is_null($user)) {
-            $post = Post::where("user_id", $user->id)->where("id", $id)->first();
+            $post = Post::where("permission_id", $user->id)->where("id", $id)->first();
             if (!is_null($post)) {
                 return response()->json(["status" => "success", "data" => $post], 200);
             } else {
