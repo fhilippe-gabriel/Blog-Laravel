@@ -1,0 +1,202 @@
+stages:
+  - test
+  - build
+  - deploy
+  - stop
+
+Testes Laravel:
+  stage: test
+  image: luizjrdeveloper/laravel-gitlab-ci:latest
+  script:
+    - cd backend/
+    - curl -sS https://getcomposer.org/installer | php
+    - php composer.phar install
+    - cp .env.testing .env
+    - touch database/database.sqlite
+    - php artisan key:generate
+    - php artisan config:cache
+    - php artisan migrate
+    - php artisan db:seed
+    - php artisan passport:client --password
+    - php artisan passport:key
+    - php artisan l5-swagger:generate
+    - php vendor/bin/phpunit --coverage-text --colors=never
+  cache:
+    paths:
+      - backend/vendor/
+  retry: 1
+  artifacts:
+    paths:
+      - ./backend/storage/logs # for debugging
+    expire_in: 1 days
+    when: on_failure
+
+Build Backend:
+  stage: build
+  script:
+    # Logando no Gitlab Registry
+    - echo "Logging to GitLab Container Registry with CI credentials..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # Fazendo pull da última imagem para usar como cache
+    - echo "Pull latest Docker image..."
+    - docker pull $CI_REGISTRY_IMAGE/backend:latest || true
+    # Fazendo build da nova imagem
+    - echo "Building Docker image..."
+    - docker build --cache-from $CI_REGISTRY_IMAGE/backend:latest --tag $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA ./backend/
+    # Fazendo push da tag com hashe do commit
+    - echo "Pushing to GitLab Container Registry..."
+    - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
+    # Fazendo tag e push da imagem latest
+    - echo "Fazendo tag e push da imagem latest..."
+    # Criando tag "latest"
+    - docker tag $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/backend:latest
+    # Fazend push do latest.
+    - docker push $CI_REGISTRY_IMAGE/backend:latest
+  only:
+    - dev
+    - stage
+    - master
+  tags:
+    - docker
+    - build
+  retry: 2
+Build Frontend:
+  stage: build
+  script:
+    # Logando no Gitlab Registry
+    - echo "Logging to GitLab Container Registry with CI credentials..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # Fazendo pull da última imagem para usar como cache
+    - echo "Pull latest Docker image..."
+    - docker pull $CI_REGISTRY_IMAGE/frontend:latest || true
+    # Fazendo build da nova imagem
+    - echo "Building Docker image..."
+    - docker build --cache-from $CI_REGISTRY_IMAGE/frontend:latest --tag $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA ./frontend/
+    # Fazendo push da tag com hashe do commit
+    - echo "Pushing to GitLab Container Registry..."
+    - docker push $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
+    # Fazendo tag e push da imagem latest
+    - echo "Fazendo tag e push da imagem latest..."
+    # Criando tag "latest"
+    - docker tag $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/frontend:latest
+    # Fazend push do latest.
+    - docker push $CI_REGISTRY_IMAGE/frontend:latest
+  only:
+    - dev
+    - stage
+    - master
+  tags:
+    - docker
+    - build
+  retry: 2
+
+Deploy Dev:
+  stage: deploy
+  script:
+    - echo "Fazendo Login no Gitlab Registry..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo "Fazendo pull da imagem latest"
+    - docker pull $CI_REGISTRY_IMAGE/backend:latest || true
+    - docker pull $CI_REGISTRY_IMAGE/frontend:latest || true
+    - echo "Realizando Deploy no Cluster do Docker Swarm"
+    - docker stack deploy -c docker-compose-dev.yml --resolve-image never --prune --with-registry-auth ${STACK_NOME}_dev
+  only:
+    - dev
+  tags:
+    - dev
+    - stage
+  environment:
+    name: dev
+    url: https://$VIRTUAL_HOST
+    on_stop: stop-dev
+  retry: 1
+
+Deploy Stage:
+  stage: deploy
+  script:
+    - echo "Fazendo Login no Gitlab Registry..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo "Fazendo pull da imagem latest"
+    - docker pull $CI_REGISTRY_IMAGE/frontend:latest || true
+    - echo "Realizando Deploy no Cluster do Docker Swarm"
+    - docker stack deploy -c docker-compose-stage.yml --resolve-image never --prune --with-registry-auth ${STACK_NOME}_stage
+  only:
+    - stage
+  tags:
+    - stage
+    - deploy
+  environment:
+    name: stage
+    url: https://$VIRTUAL_HOST
+    on_stop: stop-stage
+  retry: 1
+
+Deploy Prod:
+  stage: deploy
+  script:
+    - echo "Fazendo Login no Gitlab Registry..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo "Fazendo pull da imagem latest"
+    - docker pull $CI_REGISTRY_IMAGE/frontend:latest || true
+    - echo "Realizando Deploy no Cluster do Docker Swarm"
+    - docker stack deploy -c docker-compose-prod.yml --resolve-image never --prune --with-registry-auth $STACK_NOME
+  only:
+    - master
+  tags:
+    - prod
+    - deploy
+  when: manual
+  environment:
+    name: prod
+    url: https://$VIRTUAL_HOST
+    on_stop: stop-prod
+  retry: 1
+
+stop-dev:
+  stage: stop
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker stack rm ${STACK_NOME}_dev
+  tags:
+    - dev
+    - stage
+  only:
+    - dev
+  when: manual
+  environment:
+    name: dev
+    action: stop
+
+stop-stage:
+  stage: stop
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker stack rm ${STACK_NOME}_stage
+  tags:
+    - stage
+    - deploy
+  only:
+    - stage
+  when: manual
+  environment:
+    name: stage
+    action: stop
+
+stop-prod:
+  stage: stop
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker stack rm $STACK_NOME
+  tags:
+    - prod
+    - deploy
+  only:
+    - master
+  when: manual
+  environment:
+    name: prod
+    action: stop
+

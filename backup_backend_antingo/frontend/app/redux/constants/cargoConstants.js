@@ -1,0 +1,27 @@
+//= ====================================
+//  CRUD
+//-------------------------------------
+
+export const CREATE_CARGO = 'CREATE_CARGO';
+export const CREATE_CARGO_MODAL = 'CREATE_CARGO_MODAL';
+export const INIT_CREATE_CARGO = 'INIT_CREATE_CARGO';
+export const CREATE_CARGO_SUCCESS = 'CREATE_CARGO_SUCCESS';
+export const CREATE_CARGO_FAILURE = 'CREATE_CARGO_FAILURE';
+
+export const UPDATE_CARGO = 'UPDATE_CARGO';
+export const INIT_UPDATE_CARGO = 'INIT_UPDATE_CARGO';
+export const UPDATE_CARGO_SUCCESS = 'UPDATE_CARGO_SUCCESS';
+export const UPDATE_CARGO_FAILURE = 'UPDATE_CARGO_FAILURE';
+
+export const REMOVE_CARGO = 'REMOVE_CARGO';
+export const REMOVE_CARGO_SUCCESS = 'REMOVE_CARGO_SUCCESS';
+export const REMOVE_CARGO_FAILURE = 'REMOVE_CARGO_FAILURE';
+
+export const SET_CARGOS = 'SET_CARGOS';
+export const SET_CARGO = 'SET_CARGO';
+export const LIST_CARGOS = 'LIST_CARGOS';
+export const PAGINATE_CARGOS = 'PAGINATE_CARGOS';
+
+export const FETCH_CARGO = 'FETCH_CARGO';
+export const FETCH_CARGO_FAILED = 'FETCH_CARGO_FAILED';
+export const FETCH_CARGO_SUCCESS = 'FETCH_CARGO_SUCCESS';

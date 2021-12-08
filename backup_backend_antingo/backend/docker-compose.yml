@@ -1,0 +1,35 @@
+version: '3.7'
+services:
+  dbserver:
+    image: postgres:latest
+    container_name: ssgodb
+    environment:
+      - POSTGRES_USER=${DB_USERNAME?Please set DB_USERNAME in .env file}
+      - POSTGRES_PASSWORD=${DB_PASSWORD?Please set DB_PASSWORD in .env file}
+      - POSTGRES_DB=${DB_DATABASE?Please set DB_DATABASE in .env file}
+    restart: always
+    ports:
+      - ${DB_PORT?Please set DB_PORT in .env file}:5432
+    networks:
+      - ssgonetwork
+
+  ssgoapi:
+    container_name: ssgoapi
+    build:
+      context: .
+    volumes:
+      - ./../backend:/var/www/
+    restart: on-failure
+    ports:
+      - ${APACHE_PORT?Please set APACHE_PORT in .env file}:80
+    networks:
+      - ssgonetwork
+    depends_on:
+      - dbserver
+
+volumes:
+  dbssgo:
+  backend:
+
+networks:
+  ssgonetwork:
