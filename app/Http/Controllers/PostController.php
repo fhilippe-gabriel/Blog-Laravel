@@ -6,8 +6,10 @@ use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
-class PosteController extends Controller
+class PostController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -72,17 +74,25 @@ class PosteController extends Controller
      */
     public function show($id)
     {
-        $user = Auth::user();
+        /* $user = Auth::user();
         if (!is_null($user)) {
-            $post = Post::where("permission_id", $user->id)->where("id", $id)->first();
-            if (!is_null($post)) {
-                return response()->json(["status" => "success", "data" => $post], 200);
-            } else {
-                return response()->json(["status" => "failed", "message" => "Failed! no Post found"], 200);
-            }
+        $post = Post::where("user_id", $user->id)->where("id", $id)->first();
+        if (!is_null($post)) {
+        return response()->json(["status" => "success", "data" => $post], 200);
         } else {
-            return response()->json(["status" => "failed", "message" => "Un-authorized user"], 403);
+        return response()->json(["status" => "failed", "message" => "Failed! no Post found"], 200);
         }
+        } else {
+        return response()->json(["status" => "failed", "message" => "Un-authorized user"], 403);
+        } */
+
+        // Testa pra ver qual e o resultado de cada um DD ai
+
+        $per = Permission::all();
+        $role = Role::all();
+
+        dd($per);
+        dd($role);
     }
 
     /**
