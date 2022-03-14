@@ -1,6 +1,17 @@
 <h1>Novo Post</h1>
-<form action="" method="post">
-    <input type="text" name="title" id="title" placeholder="Titulo">
-    <textarea name="contente" id="content" cols="30" rows="4" placeholder="Conteudo"> </textarea>
+
+@if ($errors->any())
+    <ul>
+        @foreach ($errors->all() as $error)
+            <li>
+                {{ $error }}
+            </li>
+        @endforeach
+    </ul>
+@endif
+<form action="{{ route('posts.store') }}" method="POST">
+    @csrf
+    <input type="text" name="title" id="title" placeholder="Titulo" value="{{ old('title') }}">
+    <textarea name="content" id="content" cols="30" rows="4" placeholder="Conteudo">{{ old('content') }} </textarea>
     <button type="submit">Enviar</button>
 </form>
