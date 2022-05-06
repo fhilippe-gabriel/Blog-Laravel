@@ -102,7 +102,9 @@ class PostController extends Controller
         // return view('admin.posts.edit', compact('post'));
         $post->update($data);
 
-        return redirect()->route('posts.index')->with('message', 'Post editado com sucesso');
+        return redirect()
+            ->route('posts.index')
+            ->with('message', 'Post editado com sucesso');
     }
 
     //filtra & pesquisa posts

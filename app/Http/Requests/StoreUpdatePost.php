@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreUpdatePost extends FormRequest
 {
@@ -23,10 +24,18 @@ class StoreUpdatePost extends FormRequest
      */
     public function rules()
     {
+        $id = $this->segment(2);
         return [
-            'title' => 'min:5|max:160',
+            // 'title' => 'min:5|max:160|unique:posts|unique:title',
+            'title' => [
+                'required',
+                'min:5',
+                'max:160',
+                // "unique:posts,title,{$id},id",
+                Rule::unique('posts')->ignore($id),
+            ],
             'content' => ['nullable', 'min:5', 'max:100'],
-            'image' => ['nullable', 'image'],
+            'image' => ['required', 'image'],
         ];
     }
 }
